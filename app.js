@@ -5,7 +5,7 @@ const simpleGit = require("simple-git");
 
 const app = express();
 const PORT = process.env.PORT || 3000; // Use environment variable for port
-const GITHUB_SECRET = process.env.GITHUB_SECRET; // Use environment variable for GitHub secret
+const key = "arkoss"; // Use environment variable for GitHub secret
 
 // Middleware to parse JSON and verify GitHub signatures
 app.use(bodyParser.json({ verify: verifyGithubSignature }));
@@ -16,7 +16,7 @@ function verifyGithubSignature(req, res, buf, encoding) {
         throw new Error('No signature provided');
     }
 
-    const hmac = crypto.createHmac('sha256', GITHUB_SECRET);
+    const hmac = crypto.createHmac('sha256', key);
     const digest = `sha256=${hmac.update(buf).digest('hex')}`;
 
     if (signature !== digest) {
