@@ -6,7 +6,7 @@ const { exec } = require("child_process");
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SECRET = "arkoss";
-const REPO_PATH = "/Users//nadjibkhammar//Documents//Arkoss//EFREI//M1//S8//API//TP//webhooks";
+const REPO_PATH = "/Users//nadjibkhammar//Documents//Arkoss//EFREI//M1//S8//API//TP//webhook";
 const BRANCH = "main";
 // Middleware to parse JSON bodies
 app.use(bodyParser.json());
