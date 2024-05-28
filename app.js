@@ -1,49 +1,46 @@
-// app.js
 const express = require("express");
 const bodyParser = require("body-parser");
 const crypto = require("crypto");
-const { exec } = require("child_process");
+const simpleGit = require("simple-git");
+//TEST 
 const app = express();
-const PORT = process.env.PORT || 3000;
-const SECRET = "arkoss";
-const REPO_PATH = "/Users//nadjibkhammar//Documents//Arkoss//EFREI//M1//S8//API//TP//webhook";
-const BRANCH = "main";
-// Middleware to parse JSON bodies
+const PORT = 3000; 
+const GITHUB_SECRET = "arkoss"; // secret key to your github setting
+
 app.use(bodyParser.json());
-// Middleware to verify GitHub signature
-function verifyGitHubSignature(req, res, next) {
-    const signature = req.headers["x-hub-signature"];
-    const payload = JSON.stringify(req.body);
-    const hash = `sha1=${crypto
-        .createHmac("sha1", SECRET)
-        .update(payload)
-        .digest("hex")}`;
-    if (signature === hash) {
-        next();
-    } else {
-        res.status(401).send("Invalid signature");
-} }
-// Webhook endpoint
-app.post("/webhook", verifyGitHubSignature, (req, res) => {
-    const event = req.headers["x-github-event"];
-    const branch = req.body.ref.split("/").pop();
-    if (event === "push" && branch === BRANCH) {
-        // Pull the latest code and build
-        exec(
-            `cd ${REPO_PATH} && git pull origin ${BRANCH} && npm install && npm run build`,
-            (err, stdout, stderr) => {
-                if (err) {
-                    console.error(`Error: ${stderr}`);
-                    res.status(500).send("Internal Server Error");
-                    return;
-                }
-                console.log(`Build Output: ${stdout}`);
-                res.status(200).send("Webhook received and processed");
-} );
-    } else {
-        res.status(200).send("Event received but not processed");
-} });
-// Start the server
+
+function verifyGithubSignature(req, res, buf, encoding) {
+    const signature = req.headers["x-hub-signature-256"];
+    const hmac = crypto.createHmac("sha256", GITHUB_SECRET);
+    const digest = `sha256=${hmac.update(buf).digest("hex")}`;
+
+    if (signature !== digest) {
+        return res.status(401).send("Invalid signature");
+    }
+}
+
+app.use(bodyParser.json({ verify: verifyGithubSignature }));
+
+app.post("/webhook", (req, res) => {
+    const event = req.body;
+
+    if (event.ref === "refs/heads/main") { 
+        console.log("Push event received for branch main");
+
+        // Cloner ou mettre à jour le dépôt localement
+        const git = simpleGit();
+        git.pull("origin", "main")
+            .then(() => {
+                console.log("Repository updated successfully");
+            })
+            .catch(err => console.error("Failed to update repository:", err));
+    }
+
+    res.status(200).send("Event received");
+});
+
+// star serv
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
